@@ -6,7 +6,7 @@ source("initialize.r")
 ui <- fluidPage(
   theme = bslib::bs_theme(version = 5, bootswatch = "flatly"),
   
-  # Custom CSS for 2x4 Grid Layout (Non-Staggered)
+  # Custom CSS for improved styling
   tags$head(
     tags$style(HTML("
       /* Container for tabs */
@@ -19,8 +19,8 @@ ui <- fluidPage(
       
       /* Individual Tab Styling */
       .nav-tabs .nav-item {
-        width: 24%;           /* 4 items fit nicely (4 * 24% = 96%) */
-        margin: 0.5%;        /* Small gaps between tabs */
+        width: 24%;
+        margin: 0.5%;
         text-align: center;
       }
       
@@ -28,208 +28,296 @@ ui <- fluidPage(
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
         border-radius: 4px;
-        color: #2c3e50;
+        color: #2c3e50 !important;
         font-weight: 500;
         height: 100%;
         display: flex;
-        align_items: center;
-        justify_content: center;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+      
+      .nav-tabs .nav-link:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+        color: #1a252f !important;
       }
       
       .nav-tabs .nav-link.active {
         background-color: #2c3e50;
-        color: white;
+        color: white !important;
         border-color: #2c3e50;
+      }
+      
+      /* Title Styling */
+      .main-title {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+      
+      .main-title h1 {
+        font-size: 2.8em;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 5px;
+      }
+      
+      .main-title h4 {
+        font-size: 1.2em;
+        color: #7f8c8d;
+        font-weight: normal;
+        margin-top: 0;
       }
       
       /* Adjust well panel height */
       .well {
-        min-height: 500px;
+        min-height: 450px;
+      }
+      
+      /* Sidebar transition */
+      .sidebar-panel {
+        transition: all 0.5s ease;
+      }
+      
+      .sidebar-initial {
+        width: 50% !important;
+        margin: 0 auto;
+        float: none !important;
+      }
+      
+      .content-container {
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+      }
+      
+      /* Hide scrollbar for cleaner look */
+      .content-container::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      .content-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      
+      .content-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      
+      .content-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
       }
     "))
   ),
   
-  titlePanel("BRFSS Health Survey Dashboard"),
+  # Title
+  div(class = "main-title",
+    h1("BRFSS Health Survey Dashboard"),
+    h4("by Spandan, Rituraj and Gaurav")
+  ),
   
-  sidebarLayout(
-    # Sidebar for question selection
-    sidebarPanel(
-      width = 3,
-      h4("Select Survey Question"),
-      hr(),
-      
-      # Hierarchical selection
-      selectInput("class_select", 
-                  "1. Select Class:",
-                  choices = c("Choose..." = "", sort(unique(layerQ$Class)))),
-      
-      conditionalPanel(
-        condition = "input.class_select != ''",
-        selectInput("topic_select",
-                    "2. Select Topic:",
-                    choices = NULL)
-      ),
-      
-      conditionalPanel(
-        condition = "input.topic_select != ''",
-        selectInput("question_select",
-                    "3. Select Question:",
-                    choices = NULL)
-      ),
-      
-      hr(),
-      
-      conditionalPanel(
-        condition = "input.question_select != ''",
+  # Conditional layout based on question selection
+  conditionalPanel(
+    condition = "input.question_select == ''",
+    fluidRow(
+      column(12,
+        div(class = "sidebar-initial",
+          wellPanel(
+            h4("Select Survey Question"),
+            hr(),
+            
+            selectInput("class_select", 
+                        "1. Select Class:",
+                        choices = c("Choose..." = "", sort(unique(layerQ$Class)))),
+            
+            conditionalPanel(
+              condition = "input.class_select != ''",
+              selectInput("topic_select",
+                          "2. Select Topic:",
+                          choices = NULL)
+            ),
+            
+            conditionalPanel(
+              condition = "input.topic_select != ''",
+              selectInput("question_select",
+                          "3. Select Question:",
+                          choices = NULL)
+            )
+          )
+        )
+      )
+    )
+  ),
+  
+  conditionalPanel(
+    condition = "input.question_select != ''",
+    sidebarLayout(
+      # Sidebar for question selection
+      sidebarPanel(
+        class = "sidebar-panel",
+        width = 3,
+        h4("Select Survey Question"),
+        hr(),
+        
+        # Hierarchical selection
+        selectInput("class_select2", 
+                    "1. Select Class:",
+                    choices = c("Choose..." = "", sort(unique(layerQ$Class)))),
+        
+        conditionalPanel(
+          condition = "input.class_select2 != ''",
+          selectInput("topic_select2",
+                      "2. Select Topic:",
+                      choices = NULL)
+        ),
+        
+        conditionalPanel(
+          condition = "input.topic_select2 != ''",
+          selectInput("question_select2",
+                      "3. Select Question:",
+                      choices = NULL)
+        ),
+        
+        hr(),
+        
         tags$div(
           style = "background-color: #e8f4f8; padding: 10px; border-radius: 5px;",
           h5("Selected Question:"),
           textOutput("selected_question_display")
         )
-      )
-    ),
-    
-    # Main panel with tabs
-    mainPanel(
-      width = 9,
-      
-      conditionalPanel(
-        condition = "input.question_select == ''",
-        tags$div(
-          style = "text-align: center; margin-top: 100px;",
-          h3("Welcome to BRFSS Dashboard"),
-          p("Please select a question from the sidebar to view the analysis."),
-          tags$img(src = "https://via.placeholder.com/400x300?text=Select+a+Question", 
-                   style = "margin-top: 20px;")
-        )
       ),
       
-      conditionalPanel(
-        condition = "input.question_select != ''",
-        tabsetPanel(
-          id = "main_tabs",
-          type = "tabs",
-          
-          # Row 1: Overall, Temporal, Age, Gender
-          tabPanel("Overall",
-            br(),
-            wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("Overall Distribution"),
-               radioButtons("gran_overall", "View:",
-                            choices = c("Summary" = 1, "With Confidence Intervals" = 4),
-                            selected = 1, inline = TRUE),
-               hr(),
-               plotOutput("overallPlot", height = "400px"),
-               actionButton("expand_overall", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-            )
-          ),
-          
-          tabPanel("Temporal",
-            br(),
-            wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("Temporal Trends"),
-               p("Year-over-year distribution"),
-               hr(),
-               plotOutput("temporalPlot", height = "400px"),
-               actionButton("expand_temporal", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-            )
-          ),
-          
-          tabPanel("Age",
-             br(),
-             wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("By Age Group"),
-               selectInput("gran_age", "Granularity:",
-                           choices = c("Summary" = 1, "By Year" = 2,
-                                       "By Top 12 States" = 3, "With CI" = 4),
-                           selected = 1),
-               hr(),
-               plotOutput("agePlot", height = "400px"),
-               actionButton("expand_age", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-             )
-          ),
-          
-          tabPanel("Gender",
-             br(),
-             wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("By Gender"),
-               selectInput("gran_gender", "Granularity:",
-                           choices = c("Summary" = 1, "By Year" = 2,
-                                       "By Top 12 States" = 3, "With CI" = 4),
-                           selected = 1),
-               hr(),
-               plotOutput("genderPlot", height = "400px"),
-               actionButton("expand_gender", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-             )
-          ),
-          
-          # Row 2: Race, Education Level, Income Level, State/Territory
-          tabPanel("Race",
-             br(),
-             wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("By Race/Ethnicity"),
-               selectInput("gran_race", "Granularity:",
-                           choices = c("Summary" = 1, "By Year" = 2,
-                                       "By Top 12 States" = 3, "With CI" = 4),
-                           selected = 1),
-               hr(),
-               plotOutput("racePlot", height = "400px"),
-               actionButton("expand_race", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-             )
-          ),
-          
-          tabPanel("Education Level",
-             br(),
-             wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("By Education Level"),
-               selectInput("gran_edu", "Granularity:",
-                           choices = c("Summary" = 1, "By Year" = 2,
-                                       "By Top 12 States" = 3, "With CI" = 4),
-                           selected = 1),
-               hr(),
-               plotOutput("eduPlot", height = "400px"),
-               actionButton("expand_edu", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-             )
-          ),
-          
-          tabPanel("Income Level",
-             br(),
-             wellPanel(
-               style = "background-color: #f8f9fa;",
-               h4("By Income Level"),
-               selectInput("gran_income", "Granularity:",
-                           choices = c("Summary" = 1, "By Year" = 2,
-                                       "By Top 12 States" = 3, "With CI" = 4),
-                           selected = 1),
-               hr(),
-               plotOutput("incomePlot", height = "400px"),
-               actionButton("expand_income", "🔍 View Larger", 
-                            class = "btn-sm btn-outline-primary")
-             )
-          ),
-          
-          tabPanel("State/Territory",
-            br(),
-            wellPanel(
-              style = "background-color: #f8f9fa;",
-              h4("By State/Territory"),
-              p("Distribution across all U.S. states and territories"),
-              hr(),
-              plotOutput("statePlot", height = "600px"),
-              actionButton("expand_state", "🔍 View Larger", 
-                           class = "btn-sm btn-outline-primary")
+      # Main panel with tabs
+      mainPanel(
+        width = 9,
+        div(class = "content-container",
+          tabsetPanel(
+            id = "main_tabs",
+            type = "tabs",
+            
+            # Row 1: Overall, Temporal, Age, Gender
+            tabPanel("Overall",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("Overall Distribution"),
+                radioButtons("gran_overall", "View:",
+                             choices = c("Summary" = 1, "With Confidence Intervals" = 4),
+                             selected = 1, inline = TRUE),
+                hr(),
+                plotOutput("overallPlot", height = "400px"),
+                actionButton("expand_overall", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            tabPanel("Temporal",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("Temporal Trends"),
+                p("Year-over-year distribution"),
+                hr(),
+                plotOutput("temporalPlot", height = "400px"),
+                actionButton("expand_temporal", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            tabPanel("Age",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("By Age Group"),
+                selectInput("gran_age", "Granularity:",
+                            choices = c("Summary" = 1, "By Year" = 2,
+                                        "By Top 12 States" = 3, "With CI" = 4),
+                            selected = 1),
+                hr(),
+                plotOutput("agePlot", height = "400px"),
+                actionButton("expand_age", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            tabPanel("Gender",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("By Gender"),
+                selectInput("gran_gender", "Granularity:",
+                            choices = c("Summary" = 1, "By Year" = 2,
+                                        "By Top 12 States" = 3, "With CI" = 4),
+                            selected = 1),
+                hr(),
+                plotOutput("genderPlot", height = "400px"),
+                actionButton("expand_gender", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            # Row 2: Race, Education Level, Income Level, State/Territory
+            tabPanel("Race",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("By Race/Ethnicity"),
+                selectInput("gran_race", "Granularity:",
+                            choices = c("Summary" = 1, "By Year" = 2,
+                                        "By Top 12 States" = 3, "With CI" = 4),
+                            selected = 1),
+                hr(),
+                plotOutput("racePlot", height = "400px"),
+                actionButton("expand_race", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            tabPanel("Education Level",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("By Education Level"),
+                selectInput("gran_edu", "Granularity:",
+                            choices = c("Summary" = 1, "By Year" = 2,
+                                        "By Top 12 States" = 3, "With CI" = 4),
+                            selected = 1),
+                hr(),
+                plotOutput("eduPlot", height = "400px"),
+                actionButton("expand_edu", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            tabPanel("Income Level",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("By Income Level"),
+                selectInput("gran_income", "Granularity:",
+                            choices = c("Summary" = 1, "By Year" = 2,
+                                        "By Top 12 States" = 3, "With CI" = 4),
+                            selected = 1),
+                hr(),
+                plotOutput("incomePlot", height = "400px"),
+                actionButton("expand_income", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
+            ),
+            
+            tabPanel("State/Territory",
+              br(),
+              wellPanel(
+                style = "background-color: #f8f9fa;",
+                h4("By State/Territory"),
+                p("Distribution across all U.S. states and territories"),
+                hr(),
+                plotOutput("statePlot", height = "500px"),
+                actionButton("expand_state", "🔍 View Larger", 
+                             class = "btn-sm btn-outline-primary")
+              )
             )
           )
         )
@@ -240,6 +328,35 @@ ui <- fluidPage(
 
 # Define server logic ----
 server <- function(input, output, session) {
+  
+  # Professional color palette
+  color_palette <- c("#3498db", "#e74c3c", "#2ecc71", "#f39c12", 
+                     "#9b59b6", "#1abc9c", "#34495e", "#e67e22")
+  
+  # Sync the two sets of inputs
+  observeEvent(input$class_select, {
+    updateSelectInput(session, "class_select2", selected = input$class_select)
+  })
+  
+  observeEvent(input$class_select2, {
+    updateSelectInput(session, "class_select", selected = input$class_select2)
+  })
+  
+  observeEvent(input$topic_select, {
+    updateSelectInput(session, "topic_select2", selected = input$topic_select)
+  })
+  
+  observeEvent(input$topic_select2, {
+    updateSelectInput(session, "topic_select", selected = input$topic_select2)
+  })
+  
+  observeEvent(input$question_select, {
+    updateSelectInput(session, "question_select2", selected = input$question_select)
+  })
+  
+  observeEvent(input$question_select2, {
+    updateSelectInput(session, "question_select", selected = input$question_select2)
+  })
   
   # Update topic choices based on class selection
   observeEvent(input$class_select, {
@@ -252,6 +369,26 @@ server <- function(input, output, session) {
       sort()
     
     updateSelectInput(session, "topic_select",
+                      choices = c("Choose..." = "", topics),
+                      selected = "")
+    updateSelectInput(session, "topic_select2",
+                      choices = c("Choose..." = "", topics),
+                      selected = "")
+  })
+  
+  observeEvent(input$class_select2, {
+    req(input$class_select2)
+    
+    topics <- layerQ |>
+      filter(Class == input$class_select2) |>
+      pull(Topic) |>
+      unique() |>
+      sort()
+    
+    updateSelectInput(session, "topic_select",
+                      choices = c("Choose..." = "", topics),
+                      selected = "")
+    updateSelectInput(session, "topic_select2",
                       choices = c("Choose..." = "", topics),
                       selected = "")
   })
@@ -268,6 +405,27 @@ server <- function(input, output, session) {
       sort()
     
     updateSelectInput(session, "question_select",
+                      choices = c("Choose..." = "", questions),
+                      selected = "")
+    updateSelectInput(session, "question_select2",
+                      choices = c("Choose..." = "", questions),
+                      selected = "")
+  })
+  
+  observeEvent(input$topic_select2, {
+    req(input$topic_select2)
+    
+    questions <- layerQ |>
+      filter(Class == input$class_select2,
+             Topic == input$topic_select2) |>
+      pull(Question) |>
+      unique() |>
+      sort()
+    
+    updateSelectInput(session, "question_select",
+                      choices = c("Choose..." = "", questions),
+                      selected = "")
+    updateSelectInput(session, "question_select2",
                       choices = c("Choose..." = "", questions),
                       selected = "")
   })
@@ -321,9 +479,9 @@ server <- function(input, output, session) {
     
     if (gran == 1) {
       plotDf |>
-        ggplot(aes(x = "Overall", y = agg_percent,
-                   fill = Response, color = Response)) +
+        ggplot(aes(x = "Overall", y = agg_percent, fill = Response)) +
         geom_col(position = "fill") + 
+        scale_fill_manual(values = color_palette) +
         labs(x = NULL, y = "Percentage", fill = "Response") +
         theme_minimal(base_size = 14) +
         theme(legend.position = "right")
@@ -333,6 +491,7 @@ server <- function(input, output, session) {
         geom_col() +
         geom_errorbar(aes(ymin = agg_low_ci_limit, ymax = agg_high_ci_limit),
                       width = 0.3, linewidth = 1) +
+        scale_fill_manual(values = color_palette) +
         labs(y = "Percentage (%)", x = NULL) +
         theme_minimal(base_size = 14) +
         theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
@@ -360,9 +519,9 @@ server <- function(input, output, session) {
       distinct()
     
     plotDf |>
-      ggplot(aes(x = Year, y = agg_percent,
-                 fill = Response, color = Response)) +
+      ggplot(aes(x = Year, y = agg_percent, fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = color_palette) +
       labs(x = "Year", y = "Percentage", fill = "Response") +
       theme_minimal(base_size = 14) +
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
@@ -390,8 +549,9 @@ server <- function(input, output, session) {
     
     plotDf |>
       ggplot(aes(x = reorder(Locationabbr, -agg_percent), y = agg_percent,
-                 fill = Response, color = Response)) +
+                 fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = color_palette) +
       labs(x = "State/Territory", y = "Percentage", fill = "Response") +
       theme_minimal(base_size = 14) +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 10),
@@ -404,7 +564,7 @@ server <- function(input, output, session) {
     gran <- as.numeric(input$gran_age)
     
     plotDf <- aggregate_by_category(qDf, "CAT3", granularity = gran)
-    create_granular_plot(plotDf, "Break_Out", granularity = gran)
+    create_granular_plot(plotDf, "Break_Out", granularity = gran, colors = color_palette)
   })
   
   # Gender Plot with Granularity
@@ -413,7 +573,7 @@ server <- function(input, output, session) {
     gran <- as.numeric(input$gran_gender)
     
     plotDf <- aggregate_by_category(qDf, "CAT2", granularity = gran)
-    create_granular_plot(plotDf, "Break_Out", granularity = gran)
+    create_granular_plot(plotDf, "Break_Out", granularity = gran, colors = color_palette)
   })
   
   # Race Plot with Granularity
@@ -422,7 +582,7 @@ server <- function(input, output, session) {
     gran <- as.numeric(input$gran_race)
     
     plotDf <- aggregate_by_category(qDf, "CAT4", granularity = gran)
-    create_granular_plot(plotDf, "Break_Out", granularity = gran)
+    create_granular_plot(plotDf, "Break_Out", granularity = gran, colors = color_palette)
   })
   
   # Education Plot with Granularity
@@ -431,7 +591,7 @@ server <- function(input, output, session) {
     gran <- as.numeric(input$gran_edu)
     
     plotDf <- aggregate_by_category(qDf, "CAT5", granularity = gran)
-    create_granular_plot(plotDf, "Break_Out", granularity = gran)
+    create_granular_plot(plotDf, "Break_Out", granularity = gran, colors = color_palette)
   })
   
   # Income Plot with Granularity
@@ -440,7 +600,7 @@ server <- function(input, output, session) {
     gran <- as.numeric(input$gran_income)
     
     plotDf <- aggregate_by_category(qDf, "CAT6", granularity = gran)
-    create_granular_plot(plotDf, "Break_Out", granularity = gran)
+    create_granular_plot(plotDf, "Break_Out", granularity = gran, colors = color_palette)
   })
   
   # Expand buttons - Modal dialogs for larger views
@@ -475,6 +635,7 @@ server <- function(input, output, session) {
       plotDf |>
         ggplot(aes(x = "Overall", y = agg_percent, fill = Response)) +
         geom_col(position = "fill") + 
+        scale_fill_manual(values = color_palette) +
         labs(x = NULL, y = "Percentage", fill = "Response") +
         theme_minimal(base_size = 16) +
         theme(legend.position = "right")
@@ -484,6 +645,7 @@ server <- function(input, output, session) {
         geom_col() +
         geom_errorbar(aes(ymin = agg_low_ci_limit, ymax = agg_high_ci_limit),
                       width = 0.3) +
+        scale_fill_manual(values = color_palette) +
         labs(y = "Percentage (%)", x = NULL) +
         theme_minimal(base_size = 16) +
         theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
@@ -518,6 +680,7 @@ server <- function(input, output, session) {
     plotDf |>
       ggplot(aes(x = Year, y = agg_percent, fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = color_palette) +
       labs(x = "Year", y = "Percentage", fill = "Response") +
       theme_minimal(base_size = 16) +
       theme(legend.position = "right")
@@ -537,7 +700,7 @@ server <- function(input, output, session) {
   output$age_expanded <- renderPlot({
     qDf <- qData()
     plotDf <- aggregate_by_category(qDf, "CAT3", granularity = 3)
-    create_granular_plot(plotDf, "Break_Out", granularity = 3)
+    create_granular_plot(plotDf, "Break_Out", granularity = 3, colors = color_palette)
   })
   
   observeEvent(input$expand_gender, {
@@ -553,7 +716,7 @@ server <- function(input, output, session) {
   output$gender_expanded <- renderPlot({
     qDf <- qData()
     plotDf <- aggregate_by_category(qDf, "CAT2", granularity = 3)
-    create_granular_plot(plotDf, "Break_Out", granularity = 3)
+    create_granular_plot(plotDf, "Break_Out", granularity = 3, colors = color_palette)
   })
   
   observeEvent(input$expand_race, {
@@ -569,7 +732,7 @@ server <- function(input, output, session) {
   output$race_expanded <- renderPlot({
     qDf <- qData()
     plotDf <- aggregate_by_category(qDf, "CAT4", granularity = 3)
-    create_granular_plot(plotDf, "Break_Out", granularity = 3)
+    create_granular_plot(plotDf, "Break_Out", granularity = 3, colors = color_palette)
   })
   
   observeEvent(input$expand_edu, {
@@ -585,7 +748,7 @@ server <- function(input, output, session) {
   output$edu_expanded <- renderPlot({
     qDf <- qData()
     plotDf <- aggregate_by_category(qDf, "CAT5", granularity = 3)
-    create_granular_plot(plotDf, "Break_Out", granularity = 3)
+    create_granular_plot(plotDf, "Break_Out", granularity = 3, colors = color_palette)
   })
   
   observeEvent(input$expand_income, {
@@ -601,7 +764,7 @@ server <- function(input, output, session) {
   output$income_expanded <- renderPlot({
     qDf <- qData()
     plotDf <- aggregate_by_category(qDf, "CAT6", granularity = 3)
-    create_granular_plot(plotDf, "Break_Out", granularity = 3)
+    create_granular_plot(plotDf, "Break_Out", granularity = 3, colors = color_palette)
   })
   
   observeEvent(input$expand_state, {
@@ -632,6 +795,7 @@ server <- function(input, output, session) {
       ggplot(aes(x = reorder(Locationabbr, -agg_percent), 
                  y = agg_percent, fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = color_palette) +
       labs(x = "State/Territory", y = "Percentage", fill = "Response") +
       theme_minimal(base_size = 16) +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
