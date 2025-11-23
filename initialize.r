@@ -170,26 +170,32 @@ aggregate_by_category <- function(qDf, category_id, granularity = 1) {
   return(plotDf)
 }
 
-# NEW: Generic plotting function with granularity support
-create_granular_plot <- function(plotDf, x_var = "Break_Out", granularity = 1) {
+# NEW: Generic plotting function with granularity support and color palette
+create_granular_plot <- function(plotDf, x_var = "Break_Out", granularity = 1, 
+                                 colors = c("#3498db", "#e74c3c", "#2ecc71", "#f39c12", 
+                                           "#9b59b6", "#1abc9c", "#34495e", "#e67e22")) {
   
   # Base plot
   if (granularity == 1) {
     p <- plotDf |>
-      ggplot(aes(x = !!sym(x_var), y = agg_percent,
-                 fill = Response, color = Response)) +
+      ggplot(aes(x = !!sym(x_var), y = agg_percent, fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = colors) +
+      labs(y = "Percentage", x = NULL, fill = "Response") +
+      theme_minimal(base_size = 14) +
       theme(axis.text.x = element_text(angle = 10, vjust = 0.5, hjust = 1),
-            legend.position = "none")
+            legend.position = "right")
   }
   
   # Faceted by Year
   else if (granularity == 2) {
     p <- plotDf |>
-      ggplot(aes(x = !!sym(x_var), y = agg_percent,
-                 fill = Response, color = Response)) +
+      ggplot(aes(x = !!sym(x_var), y = agg_percent, fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = colors) +
       facet_wrap(~Year, ncol = 3) +
+      labs(y = "Percentage", x = NULL, fill = "Response") +
+      theme_minimal(base_size = 14) +
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 7),
             legend.position = "bottom",
             legend.text = element_text(size = 8))
@@ -207,10 +213,12 @@ create_granular_plot <- function(plotDf, x_var = "Break_Out", granularity = 1) {
     
     p <- plotDf |>
       filter(Locationabbr %in% top_locations) |>
-      ggplot(aes(x = !!sym(x_var), y = agg_percent,
-                 fill = Response, color = Response)) +
+      ggplot(aes(x = !!sym(x_var), y = agg_percent, fill = Response)) +
       geom_col(position = "fill") +
+      scale_fill_manual(values = colors) +
       facet_wrap(~Locationabbr, ncol = 4) +
+      labs(y = "Percentage", x = NULL, fill = "Response") +
+      theme_minimal(base_size = 14) +
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 6),
             legend.position = "bottom",
             legend.text = element_text(size = 7),
@@ -220,11 +228,13 @@ create_granular_plot <- function(plotDf, x_var = "Break_Out", granularity = 1) {
   # With confidence intervals
   else if (granularity == 4) {
     p <- plotDf |>
-      ggplot(aes(x = !!sym(x_var), y = agg_percent,
-                 fill = Response, color = Response)) +
+      ggplot(aes(x = !!sym(x_var), y = agg_percent, fill = Response)) +
       geom_col(position = "dodge") +
+      scale_fill_manual(values = colors) +
       geom_errorbar(aes(ymin = agg_low_ci_limit, ymax = agg_high_ci_limit),
                     position = position_dodge(width = 0.9), width = 0.25) +
+      labs(y = "Percentage (%)", x = NULL, fill = "Response") +
+      theme_minimal(base_size = 14) +
       theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
             legend.position = "right")
   }
